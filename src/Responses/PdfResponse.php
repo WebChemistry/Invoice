@@ -2,22 +2,20 @@
 
 namespace Contributte\Invoice\Responses;
 
-use Nette\Application\IResponse;
+use Nette\Application\Response;
 use Nette\Http\IRequest;
-use Nette\Http\IResponse as NetteIResponse;
+use Nette\Http\IResponse;
 
-final class PdfResponse implements IResponse
+final class PdfResponse implements Response
 {
 
-	/** @var string */
-	private $content;
-
-	public function __construct(string $content)
+	public function __construct(
+		private string $content,
+	)
 	{
-		$this->content = $content;
 	}
 
-	public function send(IRequest $httpRequest, NetteIResponse $httpResponse): void
+	public function send(IRequest $httpRequest, IResponse $httpResponse): void
 	{
 		$httpResponse->setContentType('application/pdf', 'utf-8');
 		echo $this->content;

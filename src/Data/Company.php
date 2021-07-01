@@ -2,21 +2,54 @@
 
 namespace Contributte\Invoice\Data;
 
-class Company extends Subject
+class Company implements ICompany
 {
 
-	/** @var bool */
-	protected $hasTax;
-
-	public function __construct(string $name, string $town, string $address, string $zip, string $country, ?string $tin = null, ?string $vaTin = null, bool $hasTax = false)
+	public function __construct(
+		private string $name,
+		private string $town,
+		private string $address,
+		private string $zip,
+		private ?string $country = null,
+		private ?string $vatNumber = null,
+		private ?string $id = null,
+	)
 	{
-		parent::__construct($name, $town, $address, $zip, $country, $tin, $vaTin);
-		$this->hasTax = $hasTax;
 	}
 
-	public function hasTax(): bool
+	public function getName(): string
 	{
-		return $this->hasTax;
+		return $this->name;
+	}
+
+	public function getTown(): string
+	{
+		return $this->town;
+	}
+
+	public function getAddress(): string
+	{
+		return $this->address;
+	}
+
+	public function getZip(): string
+	{
+		return $this->zip;
+	}
+
+	public function getCountry(): ?string
+	{
+		return $this->country;
+	}
+
+	public function getVatNumber(): ?string
+	{
+		return $this->vatNumber;
+	}
+
+	public function getId(): ?string
+	{
+		return $this->id;
 	}
 
 }

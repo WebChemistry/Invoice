@@ -2,15 +2,11 @@
 
 namespace Contributte\Invoice\Templates;
 
-use Contributte\Invoice\Calculators\ICalculator;
-use Contributte\Invoice\Data\Company;
-use Contributte\Invoice\Data\Customer;
-use Contributte\Invoice\Data\Order;
-use Contributte\Invoice\Renderers\IRenderer;
+use Contributte\Invoice\Data\IOrder;
 
 interface ITemplate
 {
 
-	public function build(ICalculator $calculator, IRenderer $renderer, Customer $customer, Order $order, Company $company): string;
+	public function render(IOrder $order): string;
 
 }

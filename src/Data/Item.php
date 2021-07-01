@@ -2,57 +2,16 @@
 
 namespace Contributte\Invoice\Data;
 
-use Contributte\Invoice\Calculators\ICalculator;
-use Nette\SmartObject;
-
-class Item
+class Item implements IItem
 {
 
-	use SmartObject;
-
-	/** @var string */
-	protected $name;
-
-	/** @var int|float */
-	protected $count;
-
-	/** @var int|float */
-	protected $price;
-
-	/** @var float|null */
-	private $tax;
-
-	/** @var int|float|string|null */
-	private $totalPrice;
-
-	/**
-	 * @param int|float $price
-	 * @param int|float $count
-	 */
-	public function __construct(string $name, $price, $count, ?float $tax = null)
+	public function __construct(
+		private string $name,
+		private string $unitPrice,
+		private int $quantity,
+		private string $totalPrice,
+	)
 	{
-		$this->name = $name;
-		$this->count = $count;
-		$this->price = $price;
-		$this->tax = $tax;
-	}
-
-	/////////////////////////////////////////////////////////////////
-
-	/**
-	 * @param float|int|string $totalPrice
-	 * @return static
-	 */
-	public function setTotalPrice($totalPrice)
-	{
-		$this->totalPrice = $totalPrice;
-
-		return $this;
-	}
-
-	public function getTax(): ?float
-	{
-		return $this->tax;
 	}
 
 	public function getName(): string
@@ -60,41 +19,19 @@ class Item
 		return $this->name;
 	}
 
-	/**
-	 * @return int|float
-	 */
-	public function getCount()
+	public function getUnitPrice(): string
 	{
-		return $this->count;
+		return $this->unitPrice;
 	}
 
-	/**
-	 * @return int|float
-	 */
-	public function getPrice()
+	public function getQuantity(): int
 	{
-		return $this->price;
+		return $this->quantity;
 	}
 
-	/**
-	 * @return float|int|string
-	 */
-	public function getTotalPrice(ICalculator $calculator, bool $useTax = false)
+	public function getTotalPrice(): string
 	{
-		if ($this->totalPrice !== null) {
-			return $calculator->add($this->totalPrice, 0);
-		}
-
-		if (!$useTax) {
-			return $calculator->mul($this->price, $this->count);
-		} else {
-			$total = $calculator->mul($this->price, $this->count);
-
-			assert($this->tax !== null);
-			$tax = $calculator->add($this->tax, 1.0);
-
-			return $calculator->mul($total, $tax);
-		}
+		return $this->totalPrice;
 	}
 
 }

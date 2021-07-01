@@ -2,63 +2,36 @@
 
 namespace Contributte\Invoice\Data;
 
-use Contributte\Invoice\Calculators\ICalculator;
-use DateTime;
-use Nette\SmartObject;
-
-class Order
+class Order implements IOrder
 {
 
-	use SmartObject;
+	/** @var IItem[] */
+	private array $items = [];
 
-	/** @var string */
-	private $number;
-
-	/** @var DateTime|null */
-	private $dueDate;
-
-	/** @var Account|null */
-	private $account;
-
-	/** @var PaymentInformation */
-	private $payment;
-
-	/** @var DateTime */
-	private $created;
-
-	/** @var Item[] */
-	private $items = [];
-
-	/** @var string|float|int|null */
-	private $totalPrice;
-
-	public function __construct(string $number, ?DateTime $dueDate, ?Account $account, PaymentInformation $payment, ?DateTime $created = null)
+	public function __construct(
+		private string $number,
+		private string $totalPrice,
+		private ICompany $company,
+		private ICustomer $customer,
+		private IPaymentInformation $payment,
+		private ITimestamps $timestamps,
+	)
 	{
-		$this->number = $number;
-		$this->dueDate = $dueDate;
-		$this->account = $account;
-		$this->payment = $payment;
-		$this->created = $created ?: new DateTime();
 	}
 
-	/**
-	 * @param int|float $price
-	 * @param int|float $count
-	 */
-	public function addItem(string $name, $price, $count = 1, ?float $tax = null): Item
+	public function addItem(IItem $item): IItem
 	{
-		return $this->items[] = new Item($name, $price, $count, $tax ?: $this->getPayment()->getTax());
+		return $this->items[] = $item;
 	}
 
-	/**
-	 * @param float|int|string|null $totalPrice
-	 * @return static
-	 */
-	public function setTotalPrice($totalPrice)
+	public function addItemInline(string $name, string $unitPrice, int $quantity, string $totalPrice): Item
 	{
-		$this->totalPrice = $totalPrice;
+		return $this->items[] = new Item($name, $unitPrice, $quantity, $totalPrice);
+	}
 
-		return $this;
+	public function getTotalPrice(): string
+	{
+		return $this->totalPrice;
 	}
 
 	public function getNumber(): string
@@ -66,49 +39,32 @@ class Order
 		return $this->number;
 	}
 
-	public function getDueDate(): ?DateTime
+	public function getTimestamps(): ITimestamps
 	{
-		return $this->dueDate;
+		return $this->timestamps;
 	}
 
-	public function getAccount(): ?Account
+	public function getCompany(): ICompany
 	{
-		return $this->account;
+		return $this->company;
 	}
 
-	public function getPayment(): PaymentInformation
+	public function getCustomer(): ICustomer
+	{
+		return $this->customer;
+	}
+
+	public function getPayment(): IPaymentInformation
 	{
 		return $this->payment;
 	}
 
-	public function getCreated(): DateTime
-	{
-		return $this->created;
-	}
-
 	/**
-	 * @return Item[]
+	 * @return IItem[]
 	 */
 	public function getItems(): array
 	{
 		return $this->items;
-	}
-
-	/**
-	 * @return float|int|string
-	 */
-	public function getTotalPrice(ICalculator $calculator, bool $useTax = false)
-	{
-		if ($this->totalPrice !== null) {
-			return $this->totalPrice;
-		}
-
-		$total = 0;
-		foreach ($this->getItems() as $item) {
-			$total = $calculator->add($total, $item->getTotalPrice($calculator, $useTax));
-		}
-
-		return $total;
 	}
 
 }

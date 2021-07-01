@@ -2,59 +2,43 @@
 
 namespace Contributte\Invoice;
 
-use Contributte\Invoice\Calculators\FloatCalculator;
-use Contributte\Invoice\Calculators\ICalculator;
-use Contributte\Invoice\Data\Company;
-use Contributte\Invoice\Data\Customer;
+use Contributte\Invoice\Data\IOrder;
 use Contributte\Invoice\Data\Order;
-use Contributte\Invoice\Renderers\IRenderer;
-use Contributte\Invoice\Renderers\PDFRenderer;
 use Contributte\Invoice\Responses\PdfResponse;
-use Contributte\Invoice\Templates\DefaultTemplate;
 use Contributte\Invoice\Templates\ITemplate;
-use Nette\Application\IResponse;
-use Nette\SmartObject;
+use Contributte\Invoice\Templates\ParaisoTemplate;
+use Nette\Application\Response;
 
-class Invoice
+final class Invoice
 {
 
-	use SmartObject;
+	private ITemplate $template;
 
-	/** @var Company */
-	protected $company;
-
-	/** @var ITemplate */
-	private $template;
-
-	/** @var IRenderer */
-	private $renderer;
-
-	/** @var ICalculator */
-	private $calculator;
-
-	public function __construct(Company $company, ?ITemplate $template = null, ?IRenderer $renderer = null, ?ICalculator $calculator = null)
+	public function __construct(?ITemplate $template = null)
 	{
-		$this->company = $company;
-		$this->template = $template ?: new DefaultTemplate();
-		$this->renderer = $renderer ?: new PDFRenderer();
-		$this->calculator = $calculator ?: new FloatCalculator();
+		$this->template = $template ?: new ParaisoTemplate();
 	}
 
-	public function create(Customer $customer, Order $order): string
+	public function create(IOrder $order): string
 	{
-		return $this->template->build($this->calculator, $this->renderer, $customer, $order, $this->company);
+		return $this->template->render($order);
 	}
 
-	public function send(Customer $customer, Order $order): void
+	public function send(IOrder $order): void
 	{
-		header('Content-type: application/pdf');
+		header('Content-type: application/pdf; charset=utf-8');
 
-		echo $this->create($customer, $order);
+		echo $this->create($order);
 	}
 
-	public function createResponse(Customer $customer, Order $order): IResponse
+	public function createResponse(Order $order): Response
 	{
-		return new PdfResponse($this->create($customer, $order));
+		return new PdfResponse($this->create($order));
+	}
+
+	public function withTemplate(ITemplate $template): static
+	{
+		return new static($template);
 	}
 
 }

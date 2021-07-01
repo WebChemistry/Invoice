@@ -6,159 +6,120 @@
 - [Setup](#setup)
 - [Preview with minimal setup](#preview-with-minimal-setup)
 - [Entities](#entities)
-- [Customizing](#customizing)
-- [Translation](#translation)
 - [Generating invoices](#generating-invoices)
-- [Generating preview](#generating-preview)
 - [Neon configuration](#neon-configuration)
-- [Examples](#examples)
+- [Templates](#templates)
 
 ## Benchmark
 
-Average output is ~20ms
+Average output is ~5ms
 
 ## Setup
 
-```php 
-$company = new Contributte\Invoice\Data\Company('John Doe', 'Los Angeles', 'Cavetown', '720 55', 'USA', '0123456789', 'CZ0123456789');
-$invoice = new Contributte\Invoice\Invoice($company);
+```php
+$invoice = new Contributte\Invoice\Invoice();
+
+$dataProvider = new Contributte\Invoice\Provider\DataProvider(
+    new Company('Contributte', 'Prague', 'U haldy', '110 00', 'Czech Republic', 'CZ08304431', '08304431'),
+    [new Account('CZ4808000000002353462013')],
+);
 ```
 
 ## Preview with minimal setup
 
 ```php
-$invoice = new Contributte\Invoice\Invoice(Contributte\Invoice\Preview\PreviewFactory::createCompany());
+use Contributte\Invoice\Preview\PreviewFactory;
 
-$invoice->send(Contributte\Invoice\Preview\PreviewFactory::createCustomer(), Contributte\Invoice\Preview\PreviewFactory::createOrder());
+$invoice->send(PreviewFactory::createOrder());
 ```
 
 ## Entities
 
-We have following entities: Company (seller), Customer, Account (bank account), Payment Info, Order and Item.
+We have following entities: Company (seller), Customer, Account (bank account), Payment Info, Currency, Timestamps, Order and Item.
 
 ### Company - seller
 
 ```php
-$company = new Contributte\Invoice\Data\Company('John Doe', 'Los Angeles', 'Cavetown', '720 55', 'USA', '0123456789', 'CZ0123456789');
+use Contributte\Invoice\Data\Company;
+
+$company = new Company('Contributte', 'Prague', 'U haldy', '110 00', 'Czech Republic', 'CZ08304431', '08304431');
 ```
 
 ### Customer
 
 ```php
-$customer = new Contributte\Invoice\Data\Customer('John Doe', 'Los Angeles', 'Cavetown', '720 55', 'USA');
+use Contributte\Invoice\Data\Customer;
+
+$customer = new Customer('John Doe', 'Los Angeles', 'Cavetown', '720 55', 'USA', 'CZ08304431', '08304431');
 ```
 
 ### Account - bank account
 
 ```php
-$account = new Contributte\Invoice\Data\Account('1111', 'CZ4808000000002353462015', 'GIGACZPX');
+use Contributte\Invoice\Data\Account;
+
+$account = new Account('CZ4808000000002353462013');
 ```
 
 ### Payment info
 
 ```php
-$payment = new Contributte\Invoice\Data\PaymentInformation('Kč', '0123456789', '1234', 0.21);
+use Contributte\Invoice\Data\Account;
+use Contributte\Invoice\Data\PaymentInformation;
+
+$payment = new PaymentInformation(
+    [new Account('CZ4808000000002353462013')],
+);
 ```
 
 ### Order
 
 ```php
-$order = new Contributte\Invoice\Data\Order('20160001', new \DateTime('+ 14 days'), $account, $payment);
+use Contributte\Invoice\Data\Account;
+use Contributte\Invoice\Data\Company;
+use Contributte\Invoice\Data\Customer;
+use Contributte\Invoice\Data\Order;
+use Contributte\Invoice\Data\PaymentInformation;
+use Contributte\Invoice\Data\Timestamps;
+
+$order = new Order(
+    date('Y') . '0001',
+    '$ 15.000,00',
+    new Company('Contributte', 'Prague', 'U haldy', '110 00', 'Czech Republic', 'CZ08304431', '08304431'),
+    new Customer('John Doe', 'Los Angeles', 'Cavetown', '720 55', 'USA', 'CZ08304431', '08304431'),
+    new PaymentInformation(
+        [new Account('CZ4808000000002353462013')],
+    ),
+    new Timestamps(
+        (new DateTime())->format('Y-m-d'),
+        (new DateTime('+ 1 week'))->format('Y-m-d'),
+    ),
+);
 ```
 
 ### Item
 
 ```php
-$order->addItem('Logitech G700s Rechargeable Gaming Mouse', 4, 1790);
-```
+use Contributte\Invoice\Data\Item;
 
-## Customizing
+$order->addInlineItem('Logitech G700s Rechargeable Gaming Mouse', '$ 1.790,00', 4, '$ 7.160,00');
 
-Customize numbers, money or date
+// or
 
-```php
-use Contributte\Invoice\IFormatter;
-
-class CustomFormatter implements IFormatter {
-	
-}
-```
-
-Customize colors, fonts:
-
-```php
-$template = new Contributte\Invoice\Templates\DefaultTemplate();
-
-$template->setEven(new Contributte\Invoice\Renderers\Color(0, 0, 0));
-$template->setFont(new Contributte\Invoice\Renderers\Color(0, 0, 0));
-$template->setEven(new Contributte\Invoice\Renderers\Color(0, 0, 0));
-$template->setOdd(new Contributte\Invoice\Renderers\Color(0, 0, 0));
-
-$invoice = new Contributte\Invoice\Invoice($company, $template);
-```
-
-## Translation
-
-First, create class that implements ITranslator
-
-```php
-class Translator implements Contributte\Invoice\ITranslator {
-
-	private static $translations = [
-		'subscriber' => 'Subscriber',
-		'vat' => 'VAT number',
-		'vaTin' => 'VATIN',
-		'date' => 'Date',
-		'invoice' => 'Invoice',
-		'invoiceNumber' => 'Invoice number',
-		'taxPay' => '',
-		'notTax' => 'VAT unregistered',
-		'paymentData' => 'Payment information',
-		'page' => 'Page',
-		'from' => '/',
-		'totalPrice' => 'Total price',
-		'item' => 'Item',
-		'count' => 'Quantity',
-		'pricePerItem' => 'Price per item',
-		'total' => 'Total',
-		'accountNumber' => 'Account number',
-		'swift' => 'Swift',
-		'iban' => 'Iban',
-		'varSymbol' => 'Variable symbol',
-		'constSymbol' => 'Constant symbol',
-		'tax' => 'TAX',
-		'subtotal' => 'Subtotal',
-		'dueDate' => 'Due date',
-	 ];
-
-	public function translate(string $message): string {
-		return self::$translations[$message];
-	}
-
-}
-```
-
-and pass it to the invoice and template
-
-```php
-$invoice = new Contributte\Invoice\Invoice($company, new Contributte\Invoice\Templates\DefaultTemplate(new Translator()));
+$order->addItem(new Item('Logitech G700s Rechargeable Gaming Mouse', '$ 1.790,00', 4, '$ 7.160,00'));
 ```
 
 ## Generating invoices
 
 ```php
-$invoice = new Contributte\Invoice\Invoice($company);
-
 header('Content-Type: application/pdf; charset=utf-8');
-echo $invoice->create($customer, $order);
+echo $invoice->create($order);
 ```
 
 method `Invoice::send()` automatically sets content-type header
 
 ```php
-$invoice = new Contributte\Invoice\Invoice($company);
-
-$invoice->send($customer, $order);
+$invoice->send($order);
 ```
 
 if you use nette, recommended way is
@@ -167,18 +128,10 @@ if you use nette, recommended way is
 class CustomPresenter {
 
 	public function actionPreview() {
-		$invoice = new Contributte\Invoice\Invoice($company);
-
-		$this->sendResponse($invoice->createResponse($customer, $order));
+		$this->sendResponse($this->invoice->createResponse($order));
 	}
 
 }
-```
-
-## Generating preview
-
-```php
-$invoice->send(Contributte\Invoice\Preview\PreviewFactory::createCustomer(), Contributte\Invoice\Preview\PreviewFactory::createOrder());
 ```
 
 ## Neon configuration
@@ -188,23 +141,35 @@ extensions:
 	invoice: Contributte\Invoice\DI\InvoiceExtension
 
 invoice:
-	lang: en
 	company:
 		name: string
 		town: string
 		address: string
-		zip: string|int
+		zip: string
 		country: string
 		## Optional below
-		tin: string|int
-		vaTin: string|int
-		isTax: bool
+		vatNumber: string
+		id: string
+	accounts:
+		-
+			iban: string
 ```
 
-## Examples
+## Templates
 
-First page:
-![first page](http://i.imgbox.com/pwFByZ1L.jpg)
+## Paraiso
+Single page:
+![single page](/.docs/img/paraiso.png?raw=true)
 
-Second page:
-![second page](http://i.imgbox.com/ebrwXldf.jpg)
+Multiple pages:
+![multiple pages](/.docs/img/paraiso-paginator.png?raw=true)
+
+Greyscale:
+![greyscale](/.docs/img/paraiso-greyscale.png?raw=true)
+
+## Turoiso
+Single page:
+![single page](/.docs/img/turoiso.png?raw=true)
+
+Greyscale:
+![greyscale](/.docs/img/turoiso-greyscale.png?raw=true)
